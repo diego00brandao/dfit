@@ -464,7 +464,7 @@ function rEvo(){
  <button class="btn p" style="width:100%;margin-top:12px" onclick="$('#ffile').click()">Adicionar foto</button><input type="file" id="ffile" accept="image/*" style="display:none" onchange="addFoto(this.files[0]);this.value=''">
  <div class="pill" style="margin-top:14px">${POSES.map(x=>`<button class="${cmpPose===x?'on':''}" onclick="cmpPose='${x}';fotoFill()">${x}</button>`).join('')}</div>
  <div id="fcmp" style="margin-top:12px"></div><div id="fgal" class="fgrid" style="margin-top:12px"></div>
- <div class="muted" style="margin-top:10px">As fotos ficam guardadas só neste celular e não entram no backup.</div></div>
+ <div class="muted" style="margin-top:10px">As fotos entram no backup (Mais → Backup → Exportar).</div></div>
  <div class="card"><h3>Gráfico</h3><div class="pill" style="flex-wrap:wrap;margin-bottom:10px">${MED.map(([k,n])=>`<button class="${metric===k?'on':''}" onclick="metric='${k}';render()">${n.replace(' (kg)','')}</button>`).join('')}</div>${chart()}</div>
  <div class="card"><h3>Registrar</h3><label class="f">Data</label><input id="e_d" type="date" value="${sel}"><div class="grid2">${f}</div><button class="btn p" style="margin-top:12px;width:100%" onclick="saveEvo()">Salvar medição</button></div>
  <div class="card"><h3>Perfil</h3><div class="grid3">
@@ -501,12 +501,17 @@ function rMais(){
  <div class="card"><h3>Backup</h3><div class="muted">Último backup: ${S.lastBackup?brD(S.lastBackup):'nunca'}</div>
  <div class="row" style="margin-top:10px"><button class="btn p" onclick="exp()">Exportar JSON</button><button class="btn" onclick="$('#imp').click()">Importar</button><input type="file" id="imp" accept=".json,application/json" style="display:none" onchange="imp(this.files[0])"></div>
  <button class="btn sm d" style="margin-top:12px" onclick="if(confirm('Apagar TODOS os dados?')&&confirm('Tem certeza? Não dá para desfazer.')){S=def();save();render()}">Apagar tudo</button></div>
- <div class="muted" style="text-align:center;margin:8px 0">D.fit v7.1</div>`;
+ <div class="muted" style="text-align:center;margin:8px 0">D.fit v7.2</div>`;
 }
 function setPhase(n){if(n===1&&!S.starts[1]){const v=prompt('Data de início da Fase 1 (AAAA-MM-DD):',dk());if(!v||!/^\d{4}-\d{2}-\d{2}$/.test(v)){toast('Defina a data de início');return}S.starts[1]=v}S.phase=n;save();render()}
 function askNotif(){try{if(!('Notification' in window)){toast('Notificações não suportadas aqui');return}Notification.requestPermission().then(p=>toast(p==='granted'?'Notificações permitidas':'Permissão negada'))}catch(e){toast('Não foi possível')}}
-function exp(){S.lastBackup=dk();save();const b=new Blob([JSON.stringify(S,null,1)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='backup-4fases-'+dk()+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);render()}
-function imp(f){if(!f)return;const r=new FileReader();r.onload=()=>{try{const o=JSON.parse(r.result);if(!o||typeof o!=='object'||!o.days)throw 0;if(!confirm('Substituir os dados atuais pelo backup?'))return;S=migrate(o);save();render();toast('Backup restaurado')}catch(e){alert('Arquivo inválido')}};r.readAsText(f)}
+const b2u=b=>new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(b)});
+async function exp(){S.lastBackup=dk();save();let fotos=[];try{fotos=await Promise.all((await fotosAll()).map(async x=>({id:x.id,d:x.d,pose:x.pose,img:await b2u(x.blob)})))}catch(e){}
+ const b=new Blob([JSON.stringify(Object.assign({},S,{fotos}))],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='backup-dfit-'+dk()+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);toast(fotos.length?`Backup salvo com ${fotos.length} foto${fotos.length>1?'s':''}`:'Backup salvo');render()}
+function imp(f){if(!f)return;const r=new FileReader();r.onload=async()=>{try{const o=JSON.parse(r.result);if(!o||typeof o!=='object'||!o.days)throw 0;if(!confirm('Substituir os dados atuais pelo backup?'))return;const fotos=o.fotos||[];delete o.fotos;S=migrate(o);save();
+ if(fotos.length){await fotoTx(st=>{st.clear();fotos.forEach(x=>{const[m,d]=x.img.split(',');const bin=atob(d),u=new Uint8Array(bin.length);for(let k=0;k<bin.length;k++)u[k]=bin.charCodeAt(k);st.put({id:x.id,d:x.d,pose:x.pose,blob:new Blob([u],{type:m.slice(5,m.indexOf(';'))})})})})}
+ render();toast(fotos.length?`Backup restaurado com ${fotos.length} foto${fotos.length>1?'s':''}`:'Backup restaurado')}catch(e){alert('Arquivo inválido')}};r.readAsText(f)}
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 
 /* ===== LEMBRETES ===== */
 function checkRem(){
