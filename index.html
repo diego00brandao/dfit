@@ -277,7 +277,7 @@ function REM0(){return [{h:'06:50',t:'Levantar',on:true},{h:'08:30',t:'Café: ov
 function migrate(s){const d=def();if(!s.v2){s.phase=0;s.starts={0:'2026-10-27',1:''};delete s.start;s.v2=1}if(!s.v3){s.liberado=true;s.academia='2026-11-16';s.v3=1}if(!s.v4){s.phase=1;s.starts=Object.assign({},s.starts||{},{1:'2026-11-08'});s.evo=s.evo||[];if(!s.evo.some(e=>e.d===EVO0.d))s.evo.push({...EVO0});s.perfil=s.perfil||{};if(!s.perfil.altura)s.perfil.altura='178';if(!s.perfil.pesoIni)s.perfil.pesoIni='97.7';if(!s.perfil.meta)s.perfil.meta='90';s.rem=REM0();if(s.supps){delete s.supps.ferritin;delete s.supps.minox}s.v4=1}if(!s.v5){s.starts=Object.assign({},s.starts||{},{2:'2026-11-16'});s.tirz={start:'2026-11-27',dose:'2,5 mg',dow:5,log:{}};s.rem=REM0();s.v5=1}if(!s.v6){s.starts=Object.assign({},s.starts||{},{2:'2026-11-15'});s.v6=1}return Object.assign(d,s,{supps:Object.assign(d.supps,s.supps||{}),starts:Object.assign(d.starts,s.starts||{}),tirz:Object.assign(d.tirz,s.tirz||{})})}
 function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s)return migrate(s)}catch(e){}return def()}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
-let S=load(),tab='hoje',metric='peso',rest={end:null};
+let S=load(),tab='alim',metric='peso',rest={end:null};
 
 /* ===== UTIL ===== */
 const $=s=>document.querySelector(s);
@@ -318,13 +318,14 @@ function header(){
 function go(n){sel=addDays(sel,n);render()}
 function toggleTema(){const h=document.documentElement,n=h.dataset.t==='claro'?'escuro':'claro';h.dataset.t=n;try{localStorage.setItem('m4f_tema',n)}catch(e){}const m=document.querySelector('meta[name=theme-color]');if(m)m.content=n==='claro'?'#F6F7FB':'#0E1016'}
 const IC={
+ alim:'<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>',
  hoje:'<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
  carbo:'<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>',
  agua:'<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>',
  treino:'<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
  evo:'<path d="M22 7l-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>',
  mais:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>'};
-const TABS=[['hoje','Hoje','Checklist do dia'],['carbo','Carbo','Carboidratos do dia'],['agua','Água','Meta diária de hidratação'],['treino','Treino','Caminhada e musculação'],['evo','Evolução','Peso e medidas'],['mais','Mais','Guia, lembretes e ajustes']];
+const TABS=[['alim','Alimentação','Refeições, carboidratos e água'],['treino','Treino','Academia e esteira'],['evo','Evolução','Peso e medidas'],['mais','Mais','Guia, tirzepatida, lembretes e backup']];
 function navR(){$('#nv').innerHTML='<ul>'+TABS.map(([k,n])=>`<li><button aria-current="${tab===k}" onclick="tab='${k}';render();scrollTo(0,0)"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${IC[k]}</svg></span><span>${n}</span></button></li>`).join('')+'</ul>'}
 
 /* ===== HOJE ===== */
@@ -348,7 +349,7 @@ function rHoje(){
  h=`<div class="hero"><div class="eyebrow">Progresso do dia</div><div class="readout"><span class="int">${pct}</span><span class="dec">%</span></div>
   <div class="gmeta">${done} de ${tot} itens do checklist</div><div class="bar"><i style="width:${pct}%"></i></div>
   <div class="rails">${rail('Água',d.agua,S.agua,fmt(d.agua/1000)+' / '+fmt(S.agua/1000)+' L')}${rail('Caminhada',d.walk,wk[0],d.walk+' / '+wk[0]+' min')}${p.carb?rail('Carbo',c,p.carb,fmt(c)+' / '+p.carb+' g',cColor(c)):''}</div></div>`+h;
- return h+meals;
+ return h+(tab==='alim'?rAgua():'')+meals;
 }
 function weekKeys(k){const d=parse(k),o=(d.getDay()+6)%7;const m=addDays(k,-o);return [0,1,2,3,4,5,6].map(i=>addDays(m,i))}
 function redMeatCard(p){if(!p.redMeat)return '';const d=D(),n=weekKeys(sel).filter(k=>S.days[k]&&S.days[k].carne).length,mx=p.redMeat.max;
@@ -496,7 +497,7 @@ function rMais(){
  <div class="card"><h3>Backup</h3><div class="muted">Último backup: ${S.lastBackup?brD(S.lastBackup):'nunca'}</div>
  <div class="row" style="margin-top:10px"><button class="btn p" onclick="exp()">Exportar JSON</button><button class="btn" onclick="$('#imp').click()">Importar</button><input type="file" id="imp" accept=".json,application/json" style="display:none" onchange="imp(this.files[0])"></div>
  <button class="btn sm d" style="margin-top:12px" onclick="if(confirm('Apagar TODOS os dados?')&&confirm('Tem certeza? Não dá para desfazer.')){S=def();save();render()}">Apagar tudo</button></div>
- <div class="muted" style="text-align:center;margin:8px 0">D.fit v6.1</div>`;
+ <div class="muted" style="text-align:center;margin:8px 0">D.fit v7</div>`;
 }
 function setPhase(n){if(n===1&&!S.starts[1]){const v=prompt('Data de início da Fase 1 (AAAA-MM-DD):',dk());if(!v||!/^\d{4}-\d{2}-\d{2}$/.test(v)){toast('Defina a data de início');return}S.starts[1]=v}S.phase=n;save();render()}
 function askNotif(){try{if(!('Notification' in window)){toast('Notificações não suportadas aqui');return}Notification.requestPermission().then(p=>toast(p==='granted'?'Notificações permitidas':'Permissão negada'))}catch(e){toast('Não foi possível')}}
@@ -514,7 +515,7 @@ function checkRem(){
 
 /* ===== RENDER ===== */
 let lastTab='';
-function render(){S.phase=phaseOf(sel);header();navR();const T=TABS.find(x=>x[0]===tab);const mn=$('#mn');mn.innerHTML=`<div class="ph"><h1>${T[1]}</h1><div class="sub">${T[2]}</div></div>`+{hoje:rHoje,carbo:rCarbo,agua:rAgua,treino:rTreino,evo:rEvo,mais:rMais}[tab]();if(lastTab!==tab){mn.style.animation='none';void mn.offsetWidth;mn.style.animation='';lastTab=tab}else mn.style.animation='none'}
+function render(){S.phase=phaseOf(sel);header();navR();const T=TABS.find(x=>x[0]===tab);const mn=$('#mn');mn.innerHTML=`<div class="ph"><h1>${T[1]}</h1><div class="sub">${T[2]}</div></div>`+{alim:()=>rHoje()+'<div class="eyebrow" style="margin:20px 0 10px">Carboidratos do dia</div>'+rCarbo(),hoje:rHoje,carbo:rCarbo,agua:rAgua,treino:rTreino,evo:rEvo,mais:rMais}[tab]();if(lastTab!==tab){mn.style.animation='none';void mn.offsetWidth;mn.style.animation='';lastTab=tab}else mn.style.animation='none'}
 setInterval(()=>{const w=$('#wt');if(w)w.textContent=mmss(walkSec());
  if(rest.end){const s=(rest.end-Date.now())/1000,r=$('#rt');if(s<=0){rest.end=null;beep();toast('Descanso acabou — próxima série!');if(r)r.textContent='00:00'}else if(r)r.textContent=mmss(Math.ceil(s))}},300);
 setInterval(checkRem,20000);
