@@ -312,7 +312,7 @@ function header(){
  const w=parse(sel).toLocaleDateString('pt-BR',{weekday:'short'}).replace('.','');
  const chev=d=>`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
  const moon=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>`;
- $('#hd').innerHTML=`<div class="top"><div class="logo"><i></i><div><div class="t">D.fit <span style="color:var(--tx3);font-weight:600;font-size:13px">· ${tt}</span></div><div class="s">${st}</div></div></div>
+ $('#hd').innerHTML=`<div class="top"><div class="logo"><i></i><div><div class="t">D.fit</div></div></div>
  <div class="hacts"><button class="ibtn" onclick="go(-1)" aria-label="Dia anterior">${chev('M15 18l-6-6 6-6')}</button><button class="dbtn ${isT?'':'on'}" onclick="sel=dk();render()">${isT?'Hoje':w+' '+brD(sel)}</button><button class="ibtn" onclick="go(1)" aria-label="Próximo dia">${chev('M9 18l6-6-6-6')}</button><button class="ibtn" onclick="toggleTema()" aria-label="Trocar tema">${moon}</button></div></div>`;
 }
 function go(n){sel=addDays(sel,n);render()}
@@ -496,7 +496,7 @@ function rMais(){
  <div class="card"><h3>Backup</h3><div class="muted">Último backup: ${S.lastBackup?brD(S.lastBackup):'nunca'}</div>
  <div class="row" style="margin-top:10px"><button class="btn p" onclick="exp()">Exportar JSON</button><button class="btn" onclick="$('#imp').click()">Importar</button><input type="file" id="imp" accept=".json,application/json" style="display:none" onchange="imp(this.files[0])"></div>
  <button class="btn sm d" style="margin-top:12px" onclick="if(confirm('Apagar TODOS os dados?')&&confirm('Tem certeza? Não dá para desfazer.')){S=def();save();render()}">Apagar tudo</button></div>
- <div class="muted" style="text-align:center;margin:8px 0">D.fit v6 · Fase 2</div>`;
+ <div class="muted" style="text-align:center;margin:8px 0">D.fit v6.1</div>`;
 }
 function setPhase(n){if(n===1&&!S.starts[1]){const v=prompt('Data de início da Fase 1 (AAAA-MM-DD):',dk());if(!v||!/^\d{4}-\d{2}-\d{2}$/.test(v)){toast('Defina a data de início');return}S.starts[1]=v}S.phase=n;save();render()}
 function askNotif(){try{if(!('Notification' in window)){toast('Notificações não suportadas aqui');return}Notification.requestPermission().then(p=>toast(p==='granted'?'Notificações permitidas':'Permissão negada'))}catch(e){toast('Não foi possível')}}
